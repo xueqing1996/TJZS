@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zs.pms.dao.ArticleDao">
+	<resultMap type="TArticle" id="articlemap">
+		<association property="channel" column="channel" select="getChannel" />
+	</resultMap>
+	<select id="getChannel" parameterType="int" resultType="TChannel">
+		select * from tchannel where id=#{channel}
+	</select>
+<select id="queryCount" parameterType="QueryArticle" resultType="int">
+		select count(1) from tarticle 
+		<include refid="where"/>		
+	</select>
+	<select id="queryByCon" parameterType="QueryArticle" resultType="TArticle">
+		
+		<include refid="selector"/>
+		<include refid="where"/>
+	</select>
+	<select id="queryByPage" parameterType="QueryArticle" resultType="TArticle">
+		select * from 
+		(select rownum rn,t.* 
+		from(
+		<include refid="selector"/>
+		<include refid="where"/>
+		<include refid="order"/>
+		)t)t1
+		<include refid="page"/>
+	</select>
+	<sql id="page">
+	<where>
+	<if test="start!=0">
+	and rn&gt;=#{start}
+	</if>
+	<if test="end!=0">
+	and rn&lt;=#{end}
+	</if>
+	</where>
+	</sql>
+	<sql id="order">
+	order by id desc
+	</sql>
+	<sql id="selector">
+	select * from tarticle
+	</sql>
+	<sql id="where">
+		<where>
+			<if test="author !=null and author !=''">
+				and author=#{author}
+			</if>
+			<if test="isremod !=0">
+				and isremod=#{isremod}
+			</if>
+			<if test="ishot !=0">
+				and ishot=#{ishot}
+			</if>
+			<if test="creator !=0">
+				and creator=#{creator}
+			</if>
+			<if test="updator !=0">
+				and updator=#{updator}
+			</if>
+		</where>
+	</sql>
+	<select id="queryById" parameterType="int" resultMap="articlemap">
+		select * from tarticle where id=#{id}
+	</select>
+	<delete id="deleteByIds">
+	delete  from tarticle where id in
+	<foreach collection="array" item="id" separator="," open="(" close=")">
+	#{id}
+	</foreach>
+	</delete>
+	<delete id="delete">
+	delete  from tarticle where id =#{id}	
+	</delete>
+	<update id="update" parameterType="TArticle">
+	update tarticle
+	<set>
+	  <trim suffixOverrides=",">
+	      <if test="title!=null and title !=''">
+			 title=#{title},
+	      </if>
+	      <if test="acontent!=null and acontent !=''">
+			 acontent=#{acontent},
+	      </if>
+	      <if test="author!=null and author !=''">
+			 author=#{author},
+	      </if>
+	      <if test="channel!=null">
+			 channel=#{channel.id},
+	      </if>
+	      <if test="isremod!=null">
+			 isremod=#{isremod},
+	      </if>
+	      <if test="ishot!=null">
+			 ishot=#{ishot},
+	      </if>
+	    
+	      <if test="updator!=null ">
+			 updator=#{updator},
+	      </if>
+	    
+	      updatime=sysdate,
+	  </trim>
+	</set>
+	where id=#{id}
+	</update>
+	<insert id="insert" parameterType="TArticle">
+<selectKey keyProperty="id" order="BEFORE" resultType="int">
+select seq_article.nextval from dual
+</selectKey>
+insert into tarticle(id,title,acontent,author,channel,isremod,ishot,updator,updatime) 
+values(#{id},#{title},#{acontent},#{author},#{channel.id},#{isremod},#{ishot},#{updator},sysdate)
+</insert>
+</mapper>
